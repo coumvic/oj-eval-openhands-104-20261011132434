@@ -97,7 +97,11 @@ int main() {
     
     // Output the shortest distance to reach home with an umbrella
     // If no path exists, output -1 (though the problem guarantees a solution exists)
-    cout << dist[homeRow][homeCol][1] << endl;
+    if (dist[homeRow][homeCol][1] == INT_MAX) {
+        cout << -1 << endl;
+    } else {
+        cout << dist[homeRow][homeCol][1] << endl;
+    }
     
     return 0;
 }
