@@ -5,11 +5,11 @@
 
 using namespace std;
 
-// Structure to represent a position in the grid
-struct Position {
-    int row, col, dist;
+// Structure to represent a position in the grid with umbrella state
+struct State {
+    int row, col, hasUmbrella, dist;
     
-    Position(int r, int c, int d) : row(r), col(c), dist(d) {}
+    State(int r, int c, int umbrella, int d) : row(r), col(c), hasUmbrella(umbrella), dist(d) {}
 };
 
 int main() {
@@ -38,27 +38,26 @@ int main() {
     vector<pair<int, int>> directions = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
     
     // BFS to find shortest path from start to umbrella store to home
-    // We'll use a modified BFS that tracks whether we've visited an umbrella store
-    
     // State: (row, col, has_umbrella)
     // has_umbrella: 0 = haven't visited umbrella store, 1 = have visited umbrella store
     vector<vector<vector<int>>> dist(m, vector<vector<int>>(n, vector<int>(2, INT_MAX)));
-    queue<Position> q;
+    queue<State> q;
     
     // Start from the initial position without an umbrella
     dist[startRow][startCol][0] = 0;
-    q.push(Position(startRow, startCol, 0));
+    q.push(State(startRow, startCol, 0, 0));
     
     while (!q.empty()) {
-        Position curr = q.front();
+        State curr = q.front();
         q.pop();
         
         int row = curr.row;
         int col = curr.col;
+        int hasUmbrella = curr.hasUmbrella;
         int d = curr.dist;
         
-        // Check if we've reached the home with an umbrella
-        if (row == homeRow && col == homeCol && d == dist[homeRow][homeCol][1]) {
+        // If we've found a longer path, skip
+        if (d > dist[row][col][hasUmbrella]) {
             continue;
         }
         
@@ -78,20 +77,20 @@ int main() {
             }
             
             // Determine if we have an umbrella at the new position
-            int hasUmbrella = d >= dist[newRow][newCol][1] ? 1 : 0;
+            int newHasUmbrella = hasUmbrella;
             
             // If the new position is an umbrella store, we get an umbrella
             if (grid[newRow][newCol] == 4) {
-                hasUmbrella = 1;
+                newHasUmbrella = 1;
             }
             
             // Calculate new distance
             int newDist = d + 1;
             
             // Update distance if we found a shorter path
-            if (newDist < dist[newRow][newCol][hasUmbrella]) {
-                dist[newRow][newCol][hasUmbrella] = newDist;
-                q.push(Position(newRow, newCol, newDist));
+            if (newDist < dist[newRow][newCol][newHasUmbrella]) {
+                dist[newRow][newCol][newHasUmbrella] = newDist;
+                q.push(State(newRow, newCol, newHasUmbrella, newDist));
             }
         }
     }
