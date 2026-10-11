@@ -17,6 +17,7 @@ int main() {
     cin >> n >> m;
     
     // Read the grid
+    // Note: The input has m rows and n columns
     vector<vector<int>> grid(m, vector<int>(n));
     int startRow = -1, startCol = -1;
     int homeRow = -1, homeCol = -1;
