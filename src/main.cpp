@@ -102,9 +102,23 @@ int main() {
     // Find the minimum distance that goes through an umbrella store
     int minDist = INT_MAX;
     
+    // Check if start position is an umbrella store
+    if (grid[startRow][startCol] == 4) {
+        // If start is an umbrella store, we can go directly from start to home
+        if (distFromHome[startRow][startCol] != INT_MAX) {
+            minDist = min(minDist, distFromHome[startRow][startCol]);
+        }
+    }
+    
+    // Check all umbrella stores
     for (auto& store : umbrellaStores) {
         int storeRow = store.first;
         int storeCol = store.second;
+        
+        // Skip if this is the start position (already handled)
+        if (storeRow == startRow && storeCol == startCol) {
+            continue;
+        }
         
         // Check if we can reach the umbrella store from start and home from umbrella store
         if (distFromStart[storeRow][storeCol] != INT_MAX && distFromHome[storeRow][storeCol] != INT_MAX) {
