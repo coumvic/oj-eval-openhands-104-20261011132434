@@ -2,63 +2,39 @@
 #include <vector>
 #include <queue>
 #include <climits>
+#include <algorithm>
 
 using namespace std;
 
-// Structure to represent a position in the grid with umbrella state
-struct State {
-    int row, col, hasUmbrella, dist;
+// Structure to represent a position in the grid
+struct Position {
+    int row, col, dist;
     
-    State(int r, int c, int umbrella, int d) : row(r), col(c), hasUmbrella(umbrella), dist(d) {}
+    Position(int r, int c, int d) : row(r), col(c), dist(d) {}
 };
 
-int main() {
-    int n, m;
-    cin >> n >> m;
+// BFS to find shortest distances from a starting point to all other points
+vector<vector<int>> bfs(const vector<vector<int>>& grid, int startRow, int startCol, int m, int n) {
+    vector<vector<int>> dist(m, vector<int>(n, INT_MAX));
+    queue<Position> q;
     
-    // Read the grid
-    // Note: The input has m rows and n columns
-    vector<vector<int>> grid(m, vector<int>(n));
-    int startRow = -1, startCol = -1;
-    int homeRow = -1, homeCol = -1;
-    
-    for (int i = 0; i < m; i++) {
-        for (int j = 0; j < n; j++) {
-            cin >> grid[i][j];
-            if (grid[i][j] == 2) {
-                startRow = i;
-                startCol = j;
-            } else if (grid[i][j] == 3) {
-                homeRow = i;
-                homeCol = j;
-            }
-        }
-    }
+    // Start from the initial position
+    dist[startRow][startCol] = 0;
+    q.push(Position(startRow, startCol, 0));
     
     // Directions for moving: up, down, left, right
     vector<pair<int, int>> directions = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
     
-    // BFS to find shortest path from start to umbrella store to home
-    // State: (row, col, has_umbrella)
-    // has_umbrella: 0 = haven't visited umbrella store, 1 = have visited umbrella store
-    vector<vector<vector<int>>> dist(m, vector<vector<int>>(n, vector<int>(2, INT_MAX)));
-    queue<State> q;
-    
-    // Start from the initial position without an umbrella
-    dist[startRow][startCol][0] = 0;
-    q.push(State(startRow, startCol, 0, 0));
-    
     while (!q.empty()) {
-        State curr = q.front();
+        Position curr = q.front();
         q.pop();
         
         int row = curr.row;
         int col = curr.col;
-        int hasUmbrella = curr.hasUmbrella;
         int d = curr.dist;
         
         // If we've found a longer path, skip
-        if (d > dist[row][col][hasUmbrella]) {
+        if (d > dist[row][col]) {
             continue;
         }
         
@@ -77,31 +53,71 @@ int main() {
                 continue;
             }
             
-            // Determine if we have an umbrella at the new position
-            int newHasUmbrella = hasUmbrella;
-            
-            // If the new position is an umbrella store, we get an umbrella
-            if (grid[newRow][newCol] == 4) {
-                newHasUmbrella = 1;
-            }
-            
             // Calculate new distance
             int newDist = d + 1;
             
             // Update distance if we found a shorter path
-            if (newDist < dist[newRow][newCol][newHasUmbrella]) {
-                dist[newRow][newCol][newHasUmbrella] = newDist;
-                q.push(State(newRow, newCol, newHasUmbrella, newDist));
+            if (newDist < dist[newRow][newCol]) {
+                dist[newRow][newCol] = newDist;
+                q.push(Position(newRow, newCol, newDist));
             }
         }
     }
     
-    // Output the shortest distance to reach home with an umbrella
-    // If no path exists, output -1 (though the problem guarantees a solution exists)
-    if (dist[homeRow][homeCol][1] == INT_MAX) {
+    return dist;
+}
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+    
+    // Read the grid
+    // Note: The input has m rows and n columns
+    vector<vector<int>> grid(m, vector<int>(n));
+    int startRow = -1, startCol = -1;
+    int homeRow = -1, homeCol = -1;
+    vector<pair<int, int>> umbrellaStores;
+    
+    for (int i = 0; i < m; i++) {
+        for (int j = 0; j < n; j++) {
+            cin >> grid[i][j];
+            if (grid[i][j] == 2) {
+                startRow = i;
+                startCol = j;
+            } else if (grid[i][j] == 3) {
+                homeRow = i;
+                homeCol = j;
+            } else if (grid[i][j] == 4) {
+                umbrellaStores.push_back({i, j});
+            }
+        }
+    }
+    
+    // Find shortest distances from start to all points
+    vector<vector<int>> distFromStart = bfs(grid, startRow, startCol, m, n);
+    
+    // Find shortest distances from home to all points
+    vector<vector<int>> distFromHome = bfs(grid, homeRow, homeCol, m, n);
+    
+    // Find the minimum distance that goes through an umbrella store
+    int minDist = INT_MAX;
+    
+    for (auto& store : umbrellaStores) {
+        int storeRow = store.first;
+        int storeCol = store.second;
+        
+        // Check if we can reach the umbrella store from start and home from umbrella store
+        if (distFromStart[storeRow][storeCol] != INT_MAX && distFromHome[storeRow][storeCol] != INT_MAX) {
+            int totalDist = distFromStart[storeRow][storeCol] + distFromHome[storeRow][storeCol];
+            minDist = min(minDist, totalDist);
+        }
+    }
+    
+    // Output the result
+    if (minDist == INT_MAX) {
         cout << -1 << endl;
     } else {
-        cout << dist[homeRow][homeCol][1] << endl;
+        cout << minDist << endl;
     }
     
     return 0;
